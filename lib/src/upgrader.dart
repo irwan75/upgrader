@@ -16,8 +16,8 @@ import 'package:version/version.dart';
 import 'appcast.dart';
 import 'itunes_search_api.dart';
 import 'play_store_search_api.dart';
-import 'upgrade_os.dart';
 import 'upgrade_messages.dart';
+import 'upgrade_os.dart';
 
 /// Signature of callbacks that have no arguments and return bool.
 typedef BoolCallback = bool Function();
@@ -421,6 +421,36 @@ class Upgrader {
     return msg;
   }
 
+  /// Only called by [UpgradeAlert] and use CustomWidget.
+  void checkVersionCustomAlert(
+      {required BuildContext context,
+      Widget Function(BuildContext, Upgrader)? customAlert}) {
+    if (!_displayed) {
+      final shouldDisplay = shouldDisplayUpgrade();
+      if (debugLogging) {
+        print(
+            'upgrader: shouldDisplayReleaseNotes: ${shouldDisplayReleaseNotes()}');
+      }
+      if (shouldDisplay && customAlert != null) {
+        _displayed = true;
+
+        // Save the date/time as the last time alerted.
+        saveLastAlerted();
+
+        showDialog(
+          barrierDismissible: canDismissDialog,
+          context: context,
+          builder: (BuildContext contextPopUp) {
+            return WillPopScope(
+              onWillPop: () async => _shouldPopScope(),
+              child: customAlert(contextPopUp, this),
+            );
+          },
+        );
+      }
+    }
+  }
+
   /// Only called by [UpgradeAlert].
   void checkVersion({required BuildContext context}) {
     if (!_displayed) {
@@ -433,11 +463,12 @@ class Upgrader {
         _displayed = true;
         Future.delayed(const Duration(milliseconds: 0), () {
           _showDialog(
-              context: context,
-              title: messages.message(UpgraderMessage.title),
-              message: message(),
-              releaseNotes: shouldDisplayReleaseNotes() ? _releaseNotes : null,
-              canDismissDialog: canDismissDialog);
+            context: context,
+            title: messages.message(UpgraderMessage.title),
+            message: message(),
+            releaseNotes: shouldDisplayReleaseNotes() ? _releaseNotes : null,
+            canDismissDialog: canDismissDialog,
+          );
         });
       }
     }
@@ -609,9 +640,10 @@ class Upgrader {
       context: context,
       builder: (BuildContext context) {
         return WillPopScope(
-            onWillPop: () async => _shouldPopScope(),
-            child: _alertDialog(title ?? '', message, releaseNotes, context,
-                dialogStyle == UpgradeDialogStyle.cupertino));
+          onWillPop: () async => _shouldPopScope(),
+          child: _alertDialog(title ?? '', message, releaseNotes, context,
+              dialogStyle == UpgradeDialogStyle.cupertino),
+        );
       },
     );
   }
