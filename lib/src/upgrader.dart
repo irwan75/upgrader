@@ -210,54 +210,58 @@ class Upgrader {
     }
     if (_futureInit != null) return _futureInit!;
 
-    _futureInit = Future(() async {
-      if (debugLogging) {
-        print('upgrader: initializing');
-      }
-      if (_initCalled) {
-        assert(false, 'This should never happen.');
-        return true;
-      }
-      _initCalled = true;
-
-      if (messages.languageCode.isEmpty) {
-        print('upgrader: error -> languageCode is empty');
-      } else if (debugLogging) {
-        print('upgrader: languageCode: ${messages.languageCode}');
-      }
-
-      await _getSavedPrefs();
-
-      if (debugLogging) {
-        print('upgrader: default operatingSystem: '
-            '${upgraderOS.operatingSystem} ${upgraderOS.operatingSystemVersion}');
-        print('upgrader: operatingSystem: ${upgraderOS.operatingSystem}');
-        print('upgrader: '
-            'isAndroid: ${upgraderOS.isAndroid}, '
-            'isIOS: ${upgraderOS.isIOS}, '
-            'isLinux: ${upgraderOS.isLinux}, '
-            'isMacOS: ${upgraderOS.isMacOS}, '
-            'isWindows: ${upgraderOS.isWindows}, '
-            'isFuchsia: ${upgraderOS.isFuchsia}, '
-            'isWeb: ${upgraderOS.isWeb}');
-      }
-
-      if (_packageInfo == null) {
-        _packageInfo = await PackageInfo.fromPlatform();
+    if (kDebugMode) {
+      _futureInit = Future(() async => false);
+    } else {
+      _futureInit = Future(() async {
         if (debugLogging) {
-          print(
-              'upgrader: package info packageName: ${_packageInfo!.packageName}');
-          print('upgrader: package info appName: ${_packageInfo!.appName}');
-          print('upgrader: package info version: ${_packageInfo!.version}');
+          print('upgrader: initializing');
         }
-      }
+        if (_initCalled) {
+          assert(false, 'This should never happen.');
+          return true;
+        }
+        _initCalled = true;
 
-      _installedVersion = _packageInfo!.version;
+        if (messages.languageCode.isEmpty) {
+          print('upgrader: error -> languageCode is empty');
+        } else if (debugLogging) {
+          print('upgrader: languageCode: ${messages.languageCode}');
+        }
 
-      await _updateVersionInfo();
+        await _getSavedPrefs();
 
-      return true;
-    });
+        if (debugLogging) {
+          print('upgrader: default operatingSystem: '
+              '${upgraderOS.operatingSystem} ${upgraderOS.operatingSystemVersion}');
+          print('upgrader: operatingSystem: ${upgraderOS.operatingSystem}');
+          print('upgrader: '
+              'isAndroid: ${upgraderOS.isAndroid}, '
+              'isIOS: ${upgraderOS.isIOS}, '
+              'isLinux: ${upgraderOS.isLinux}, '
+              'isMacOS: ${upgraderOS.isMacOS}, '
+              'isWindows: ${upgraderOS.isWindows}, '
+              'isFuchsia: ${upgraderOS.isFuchsia}, '
+              'isWeb: ${upgraderOS.isWeb}');
+        }
+
+        if (_packageInfo == null) {
+          _packageInfo = await PackageInfo.fromPlatform();
+          if (debugLogging) {
+            print(
+                'upgrader: package info packageName: ${_packageInfo!.packageName}');
+            print('upgrader: package info appName: ${_packageInfo!.appName}');
+            print('upgrader: package info version: ${_packageInfo!.version}');
+          }
+        }
+
+        _installedVersion = _packageInfo!.version;
+
+        await _updateVersionInfo();
+
+        return true;
+      });
+    }
 
     return _futureInit!;
   }
