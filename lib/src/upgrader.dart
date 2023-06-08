@@ -233,7 +233,9 @@ class Upgrader {
           print('upgrader: languageCode: ${messages.languageCode}');
         }
 
-        await _getSavedPrefs();
+        if (!isForceUpdate) {
+          await _getSavedPrefs();
+        }
 
         if (debugLogging) {
           print('upgrader: default operatingSystem: '
@@ -612,7 +614,9 @@ class Upgrader {
     }
 
     // Save the date/time as the last time alerted.
-    saveLastAlerted();
+    if (!isForceUpdate) {
+      saveLastAlerted();
+    }
 
     showDialog(
       barrierDismissible: canDismissDialog,
