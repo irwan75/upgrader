@@ -12,11 +12,16 @@ class UpgradeCard extends UpgradeBase {
   /// The default margin is 4.0 logical pixels on all sides:
   /// `EdgeInsets.all(4.0)`.
   final EdgeInsetsGeometry margin;
+  final Widget Function(BuildContext context, Upgrader upgraderInfo)?
+      customDialog;
 
   /// Creates a new [UpgradeCard].
-  UpgradeCard(
-      {Key? key, Upgrader? upgrader, this.margin = const EdgeInsets.all(4.0)})
-      : super(upgrader ?? Upgrader.sharedInstance, key: key);
+  UpgradeCard({
+    Key? key,
+    Upgrader? upgrader,
+    this.margin = const EdgeInsets.all(4.0),
+    this.customDialog,
+  }) : super(upgrader ?? Upgrader.sharedInstance, key: key);
 
   /// Describes the part of the user interface represented by this widget.
   @override
@@ -32,6 +37,10 @@ class UpgradeCard extends UpgradeBase {
               processed.data != null &&
               processed.data!) {
             if (upgrader.shouldDisplayUpgrade()) {
+              if (customDialog != null) {
+                return customDialog!(context, upgrader);
+              }
+
               final title = upgrader.messages.message(UpgraderMessage.title);
               final message = upgrader.message();
               final releaseNotes = upgrader.releaseNotes;
@@ -56,8 +65,7 @@ class UpgradeCard extends UpgradeBase {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                            Upgrader()
-                                    .messages
+                            upgrader.messages
                                     .message(UpgraderMessage.releaseNotes) ??
                                 '',
                             style:
