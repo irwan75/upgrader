@@ -89,6 +89,9 @@ class Upgrader {
   /// Duration until alerting user again
   final Duration durationUntilAlertAgain;
 
+  /// Condition force update
+  final bool isForceUpdate;
+
   /// The localized messages used for display in upgrader.
   UpgraderMessages messages;
 
@@ -177,6 +180,7 @@ class Upgrader {
     this.countryCode,
     this.languageCode,
     this.minAppVersion,
+    this.isForceUpdate = false,
     this.dialogStyle = UpgradeDialogStyle.material,
     this.cupertinoButtonTextStyle,
     UpgraderOS? upgraderOS,
@@ -679,7 +683,7 @@ class Upgrader {
         _button(cupertino, messages.message(UpgraderMessage.buttonTitleLater),
             context, () => onUserLater(context, true)),
       _button(cupertino, messages.message(UpgraderMessage.buttonTitleUpdate),
-          context, () => onUserUpdated(context, !blocked())),
+          context, () => onUserUpdated(context, !isForceUpdate)),
     ];
 
     return cupertino
