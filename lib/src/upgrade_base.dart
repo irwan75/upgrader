@@ -20,7 +20,13 @@ class UpgradeBase extends StatefulWidget {
 }
 
 class UpgradeBaseState extends State<UpgradeBase> {
-  Future<bool> get initialized => widget.upgrader.initialize();
+  late final Future<bool> initialized;
+
+  @override
+  void initState() {
+    super.initState();
+    initialized = widget.upgrader.initialize();
+  }
 
   @override
   Widget build(BuildContext context) => widget.build(context, this);
