@@ -294,7 +294,15 @@ http.Client setupMockClient({String filePath = 'test/testappcast.xml'}) {
 }
 
 class TestAppcast extends Appcast {
-  TestAppcast({super.client, super.upgraderOS, super.upgraderDevice});
+  TestAppcast(
+      {http.Client? client,
+      UpgraderOS? upgraderOS,
+      UpgraderDevice? upgraderDevice})
+      : super(
+          client: client,
+          upgraderOS: upgraderOS,
+          upgraderDevice: upgraderDevice,
+        );
 
   /// Load the Appcast from [file].
   Future<List<AppcastItem>?> parseAppcastItemsFromFile(File file) async {

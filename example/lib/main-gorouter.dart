@@ -28,7 +28,7 @@ GoRouter routerConfig = GoRouter(
 );
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen(this.title, {super.key});
+  const HomeScreen(this.title, {Key? key}) : super(key: key);
 
   final String title;
 

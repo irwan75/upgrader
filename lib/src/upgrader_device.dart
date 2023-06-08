@@ -36,7 +36,7 @@ class UpgraderDevice {
       osVersionString = '0.0.0';
     } else if (upgraderOS.isWindows) {
       final info = await deviceInfo.windowsInfo;
-      osVersionString = info.displayVersion;
+      osVersionString = info.computerName;
     }
 
     // If the OS version string is not valid, don't use it.
