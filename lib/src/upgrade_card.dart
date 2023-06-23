@@ -13,14 +13,19 @@ class UpgradeCard extends UpgradeBase {
   /// `EdgeInsets.all(4.0)`.
   final EdgeInsetsGeometry margin;
   final Widget Function(BuildContext context, Upgrader upgraderInfo)?
-      customDialog;
+      customDialogNotUpdatedYet;
+  final Widget Function(BuildContext context, Upgrader upgraderInfo)?
+      customDialogUpdated;
+  final Widget Function(BuildContext context)? customDialogLoading;
 
   /// Creates a new [UpgradeCard].
   UpgradeCard({
     Key? key,
     Upgrader? upgrader,
     this.margin = const EdgeInsets.all(4.0),
-    this.customDialog,
+    this.customDialogNotUpdatedYet,
+    this.customDialogUpdated,
+    this.customDialogLoading,
   }) : super(upgrader ?? Upgrader.sharedInstance, key: key);
 
   /// Describes the part of the user interface represented by this widget.
@@ -37,8 +42,8 @@ class UpgradeCard extends UpgradeBase {
               processed.data != null &&
               processed.data!) {
             if (upgrader.shouldDisplayUpgrade()) {
-              if (customDialog != null) {
-                return customDialog!(context, upgrader);
+              if (customDialogNotUpdatedYet != null) {
+                return customDialogNotUpdatedYet!(context, upgrader);
               }
 
               final title = upgrader.messages.message(UpgraderMessage.title);
@@ -139,7 +144,13 @@ class UpgradeCard extends UpgradeBase {
               if (upgrader.debugLogging) {
                 print('UpgradeCard: will not display');
               }
+              if (customDialogUpdated != null) {
+                return customDialogUpdated!(context, upgrader);
+              }
             }
+          } else if (processed.connectionState == ConnectionState.waiting &&
+              customDialogLoading != null) {
+            return customDialogLoading!(context);
           }
           return const SizedBox(width: 0.0, height: 0.0);
         });
