@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -16,8 +17,8 @@ import 'package:version/version.dart';
 import 'appcast.dart';
 import 'itunes_search_api.dart';
 import 'play_store_search_api.dart';
-import 'upgrade_os.dart';
 import 'upgrade_messages.dart';
+import 'upgrade_os.dart';
 
 /// Signature of callbacks that have no arguments and return bool.
 typedef BoolCallback = bool Function();
@@ -209,54 +210,59 @@ class Upgrader {
     }
     if (_futureInit != null) return _futureInit!;
 
-    _futureInit = Future(() async {
-      if (debugLogging) {
-        print('upgrader: initializing');
-      }
-      if (_initCalled) {
-        assert(false, 'This should never happen.');
-        return true;
-      }
-      _initCalled = true;
-
-      if (messages.languageCode.isEmpty) {
-        print('upgrader: error -> languageCode is empty');
-      } else if (debugLogging) {
-        print('upgrader: languageCode: ${messages.languageCode}');
-      }
-
-      await _getSavedPrefs();
-
-      if (debugLogging) {
-        print('upgrader: default operatingSystem: '
-            '${upgraderOS.operatingSystem} ${upgraderOS.operatingSystemVersion}');
-        print('upgrader: operatingSystem: ${upgraderOS.operatingSystem}');
-        print('upgrader: '
-            'isAndroid: ${upgraderOS.isAndroid}, '
-            'isIOS: ${upgraderOS.isIOS}, '
-            'isLinux: ${upgraderOS.isLinux}, '
-            'isMacOS: ${upgraderOS.isMacOS}, '
-            'isWindows: ${upgraderOS.isWindows}, '
-            'isFuchsia: ${upgraderOS.isFuchsia}, '
-            'isWeb: ${upgraderOS.isWeb}');
-      }
-
-      if (_packageInfo == null) {
-        _packageInfo = await PackageInfo.fromPlatform();
+    if (kDebugMode) {
+      _futureInit = Future(() async => false);
+    } else {
+      _futureInit = Future(() async {
         if (debugLogging) {
-          print(
-              'upgrader: package info packageName: ${_packageInfo!.packageName}');
-          print('upgrader: package info appName: ${_packageInfo!.appName}');
-          print('upgrader: package info version: ${_packageInfo!.version}');
+          print('upgrader: initializing');
         }
-      }
+        if (_initCalled) {
+          assert(false, 'This should never happen.');
+          return true;
+        }
+        _initCalled = true;
 
-      _installedVersion = _packageInfo!.version;
+        if (messages.languageCode.isEmpty) {
+          print('upgrader: error -> languageCode is empty');
+        } else if (debugLogging) {
+          print('upgrader: languageCode: ${messages.languageCode}');
+        }
 
-      await _updateVersionInfo();
+        // await _getSavedPrefs();
 
-      return true;
-    });
+        if (debugLogging) {
+          print('upgrader: default operatingSystem: '
+              '${upgraderOS.operatingSystem} ${upgraderOS.operatingSystemVersion}');
+          print('upgrader: operatingSystem: ${upgraderOS.operatingSystem}');
+          print('upgrader: '
+              'isAndroid: ${upgraderOS.isAndroid}, '
+              'isIOS: ${upgraderOS.isIOS}, '
+              'isLinux: ${upgraderOS.isLinux}, '
+              'isMacOS: ${upgraderOS.isMacOS}, '
+              'isWindows: ${upgraderOS.isWindows}, '
+              'isFuchsia: ${upgraderOS.isFuchsia}, '
+              'isWeb: ${upgraderOS.isWeb}');
+        }
+
+        if (_packageInfo == null) {
+          _packageInfo = await PackageInfo.fromPlatform();
+          if (debugLogging) {
+            print(
+                'upgrader: package info packageName: ${_packageInfo!.packageName}');
+            print('upgrader: package info appName: ${_packageInfo!.appName}');
+            print('upgrader: package info version: ${_packageInfo!.version}');
+          }
+        }
+
+        _installedVersion = _packageInfo!.version;
+
+        await _updateVersionInfo();
+
+        return true;
+      });
+    }
+
     return _futureInit!;
   }
 
@@ -421,6 +427,36 @@ class Upgrader {
     return msg;
   }
 
+  /// Only called by [UpgradeAlert] and use CustomWidget.
+  void checkVersionCustomAlert(
+      {required BuildContext context,
+      Widget Function(BuildContext, Upgrader)? customAlert}) {
+    if (!_displayed) {
+      final shouldDisplay = shouldDisplayUpgrade();
+      if (debugLogging) {
+        print(
+            'upgrader: shouldDisplayReleaseNotes: ${shouldDisplayReleaseNotes()}');
+      }
+      if (shouldDisplay && customAlert != null) {
+        _displayed = true;
+
+        // Save the date/time as the last time alerted.
+        // saveLastAlerted();
+
+        showDialog(
+          barrierDismissible: canDismissDialog,
+          context: context,
+          builder: (BuildContext contextPopUp) {
+            return WillPopScope(
+              onWillPop: () async => _shouldPopScope(),
+              child: customAlert(contextPopUp, this),
+            );
+          },
+        );
+      }
+    }
+  }
+
   /// Only called by [UpgradeAlert].
   void checkVersion({required BuildContext context}) {
     if (!_displayed) {
@@ -433,11 +469,12 @@ class Upgrader {
         _displayed = true;
         Future.delayed(const Duration(milliseconds: 0), () {
           _showDialog(
-              context: context,
-              title: messages.message(UpgraderMessage.title),
-              message: message(),
-              releaseNotes: shouldDisplayReleaseNotes() ? _releaseNotes : null,
-              canDismissDialog: canDismissDialog);
+            context: context,
+            title: messages.message(UpgraderMessage.title),
+            message: message(),
+            releaseNotes: shouldDisplayReleaseNotes() ? _releaseNotes : null,
+            canDismissDialog: canDismissDialog,
+          );
         });
       }
     }
@@ -602,16 +639,17 @@ class Upgrader {
     }
 
     // Save the date/time as the last time alerted.
-    saveLastAlerted();
+    // saveLastAlerted();
 
     showDialog(
       barrierDismissible: canDismissDialog,
       context: context,
       builder: (BuildContext context) {
         return WillPopScope(
-            onWillPop: () async => _shouldPopScope(),
-            child: _alertDialog(title ?? '', message, releaseNotes, context,
-                dialogStyle == UpgradeDialogStyle.cupertino));
+          onWillPop: () async => _shouldPopScope(),
+          child: _alertDialog(title ?? '', message, releaseNotes, context,
+              dialogStyle == UpgradeDialogStyle.cupertino),
+        );
       },
     );
   }

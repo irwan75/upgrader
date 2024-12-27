@@ -12,11 +12,21 @@ class UpgradeCard extends UpgradeBase {
   /// The default margin is 4.0 logical pixels on all sides:
   /// `EdgeInsets.all(4.0)`.
   final EdgeInsetsGeometry margin;
+  final Widget Function(BuildContext context, Upgrader upgraderInfo)?
+      customDialogNotUpdatedYet;
+  final Widget Function(BuildContext context, Upgrader upgraderInfo)?
+      customDialogUpdated;
+  final Widget Function(BuildContext context)? customDialogLoading;
 
   /// Creates a new [UpgradeCard].
-  UpgradeCard(
-      {Key? key, Upgrader? upgrader, this.margin = const EdgeInsets.all(4.0)})
-      : super(upgrader ?? Upgrader.sharedInstance, key: key);
+  UpgradeCard({
+    Key? key,
+    Upgrader? upgrader,
+    this.margin = const EdgeInsets.all(4.0),
+    this.customDialogNotUpdatedYet,
+    this.customDialogUpdated,
+    this.customDialogLoading,
+  }) : super(upgrader ?? Upgrader.sharedInstance, key: key);
 
   /// Describes the part of the user interface represented by this widget.
   @override
@@ -32,6 +42,10 @@ class UpgradeCard extends UpgradeBase {
               processed.data != null &&
               processed.data!) {
             if (upgrader.shouldDisplayUpgrade()) {
+              if (customDialogNotUpdatedYet != null) {
+                return customDialogNotUpdatedYet!(context, upgrader);
+              }
+
               final title = upgrader.messages.message(UpgraderMessage.title);
               final message = upgrader.message();
               final releaseNotes = upgrader.releaseNotes;
@@ -56,8 +70,7 @@ class UpgradeCard extends UpgradeBase {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                            Upgrader()
-                                    .messages
+                            upgrader.messages
                                     .message(UpgraderMessage.releaseNotes) ??
                                 '',
                             style:
@@ -131,7 +144,13 @@ class UpgradeCard extends UpgradeBase {
               if (upgrader.debugLogging) {
                 print('UpgradeCard: will not display');
               }
+              if (customDialogUpdated != null) {
+                return customDialogUpdated!(context, upgrader);
+              }
             }
+          } else if (processed.connectionState == ConnectionState.waiting &&
+              customDialogLoading != null) {
+            return customDialogLoading!(context);
           }
           return const SizedBox(width: 0.0, height: 0.0);
         });
