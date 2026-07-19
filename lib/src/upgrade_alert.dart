@@ -9,6 +9,7 @@ import 'package:upgrader/upgrader.dart';
 class UpgradeAlert extends UpgradeBase {
   /// The [child] contained by the widget.
   final Widget? child;
+  final bool isDevelopment;
   final Widget Function(BuildContext, Upgrader)? customAlert;
 
   /// Creates a new [UpgradeAlert].
@@ -16,6 +17,7 @@ class UpgradeAlert extends UpgradeBase {
     Key? key,
     Upgrader? upgrader,
     this.child,
+    this.isDevelopment = false,
     this.customAlert,
     this.navigatorKey,
   }) : super(upgrader ?? Upgrader.sharedInstance, key: key);
@@ -28,6 +30,10 @@ class UpgradeAlert extends UpgradeBase {
   Widget build(BuildContext context, UpgradeBaseState state) {
     if (upgrader.debugLogging) {
       print('upgrader: build UpgradeAlert');
+    }
+
+    if (isDevelopment) {
+      return child ?? Container();
     }
 
     return FutureBuilder(
